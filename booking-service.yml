@@ -1,0 +1,13 @@
+server:
+  port: 8083
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,refresh
+
+ticketflow:
+  booking:
+    hold-duration: PT15M
+    sweep-interval: 60000

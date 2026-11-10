@@ -40,6 +40,11 @@ resilience4j:
         failure-rate-threshold: 50
         wait-duration-in-open-state: 10s
         permitted-number-of-calls-in-half-open-state: 3
+        # A 404 (unknown event) or a 400 is a legitimate answer, neither a success nor a
+        # failure: a series of 404s must never open the circuit.
+        ignore-exceptions:
+          - feign.FeignException$NotFound
+          - feign.FeignException$BadRequest
   timelimiter:
     configs:
       default:

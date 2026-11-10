@@ -11,9 +11,12 @@ ticketflow:
   booking:
     hold-duration: PT15M
     sweep-interval: 60000
+  clients:
+    event-service:
+      # Empty = resolve event-service through Eureka. Set EVENT_SERVICE_URL to bypass it
+      # (e.g. http://localhost:8082 when only event-service runs locally).
+      url: ${EVENT_SERVICE_URL:}
 
-# OpenFeign: booking-service reaches event-service by its Eureka name; these budgets
-# bound the synchronous call so a slow producer cannot freeze the reservation flow.
 spring:
   cloud:
     openfeign:
@@ -29,19 +32,18 @@ spring:
         group:
           enabled: true
 
-# 10-call sliding window, verdict only after 5 recorded calls: at a 50% failure rate the
-# circuit opens on the 5th failure, stays open 10s, then lets 3 test calls through.
+# Instance EventClient#getById(Long) -> EventClientgetByIdLong (alphanumeric ids enabled):
+# 10-call sliding window, verdict after 5 recorded calls, opens at 50% failures, stays
+# open 10s, then lets 3 test calls through. 404/400 are ignored, not counted.
 resilience4j:
   circuitbreaker:
-    configs:
-      default:
+    instances:
+      EventClientgetByIdLong:
         sliding-window-size: 10
         minimum-number-of-calls: 5
         failure-rate-threshold: 50
         wait-duration-in-open-state: 10s
         permitted-number-of-calls-in-half-open-state: 3
-        # A 404 (unknown event) or a 400 is a legitimate answer, neither a success nor a
-        # failure: a series of 404s must never open the circuit.
         ignore-exceptions:
           - feign.FeignException$NotFound
           - feign.FeignException$BadRequest

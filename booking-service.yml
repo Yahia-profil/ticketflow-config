@@ -5,7 +5,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,refresh
+        include: health,info,refresh,circuitbreakers,circuitbreakerevents
 
 ticketflow:
   booking:
@@ -22,3 +22,25 @@ spring:
           default:
             connect-timeout: 2000
             read-timeout: 3000
+      # Resilience (TP5): the EventClient call goes through a Resilience4J circuit breaker.
+      # group.enabled = one circuit for the whole client, not one per method.
+      circuitbreaker:
+        enabled: true
+        group:
+          enabled: true
+
+# 10-call sliding window, verdict only after 5 recorded calls: at a 50% failure rate the
+# circuit opens on the 5th failure, stays open 10s, then lets 3 test calls through.
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 4s

@@ -11,3 +11,14 @@ ticketflow:
   booking:
     hold-duration: PT15M
     sweep-interval: 60000
+
+# OpenFeign: booking-service reaches event-service by its Eureka name; these budgets
+# bound the synchronous call so a slow producer cannot freeze the reservation flow.
+spring:
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 2000
+            read-timeout: 3000
